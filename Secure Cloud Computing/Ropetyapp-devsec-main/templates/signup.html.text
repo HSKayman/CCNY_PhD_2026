@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>RoboPety</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static',
+    filename='signup.css') }}"
+    />
+  </head>
+  <body>
+    <div class="background-gradient"></div>
+    <div class="container">
+      <div class="signup-card">
+        <h1 class="logo">RoboPety</h1>
+        <p class="subtitle">Create your account and start your journey!</p>
+        <form id="signupForm" method="post">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-box">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                id="email"
+                name="email"
+                value="{{ request.form.email }}"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-box">
+              <input
+                type="text"
+                placeholder="Choose a username"
+                id="username"
+                name="username"
+                value="{{ request.form.username }}"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password_1">Password</label>
+            <div class="input-box">
+              <input
+                type="password"
+                placeholder="Create a password"
+                id="password_1"
+                name="password_1"
+                value="{{ request.form.password_1 }}"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password_2">Confirm Password</label>
+            <div class="input-box">
+              <input
+                type="password"
+                placeholder="Confirm your password"
+                id="password_2"
+                name="password_2"
+                value="{{ request.form.password_2 }}"
+                required
+              />
+            </div>
+          </div>
+          <button class="btn" type="submit">Sign Up</button>
+        </form>
+        <div class="register-link">
+          <p>Already have an account? <a href="/login">Login</a></p>
+        </div>
+        <p class="error" id="errorText"></p>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

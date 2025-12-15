@@ -1,0 +1,291 @@
+"""
+Stereo Vision Logic Module
+Contains all computational algorithms for stereo vision:
+- Fundamental matrix estimation
+- Epipole computation
+- Feature matching
+- Region analysis
+"""
+
+import numpy as np
+import cv2
+import math
+
+
+class StereoVision:
+    """
+    Main class for stereo vision computations.
+    Handles fundamental matrix, epipoles, and feature matching.
+    """
+    
+    def __init__(self):
+        self.F_matrix = None
+        self.epipoles = None
+        
+    @staticmethod
+    def normalize_points(pts, width, height):
+        """
+        Normalizes points to improve 8-point algorithm stability.
+        Translate centroid to origin and scale so average distance is sqrt(2).
+        """
+        pts = np.array(pts)
+        centroid = np.mean(pts, axis=0)
+        
+        # Shift origin to centroid
+        shifted_pts = pts - centroid
+        
+        # Calculate average distance from origin
+        mean_dist = np.mean(np.sqrt(np.sum(shifted_pts**2, axis=1)))
+        
+        # Scale factor
+        scale = np.sqrt(2) / mean_dist
+        
+        # Construct transformation matrix T
+        T = np.array([
+            [scale, 0, -scale * centroid[0]],
+            [0, scale, -scale * centroid[1]],
+            [0, 0, 1]
+        ])
+        
+        # Apply T to points (convert to homogeneous coords first)
+        pts_h = np.column_stack((pts, np.ones(len(pts))))
+        pts_norm = (T @ pts_h.T).T
+        
+        return pts_norm[:, :2], T
+    
+    def compute_fundamental_matrix(self, pts1, pts2):
+        """
+        Computes F using the normalized 8-point algorithm.
+        Reference: Stereo Vision Slides, Page 32.
+        """
+        h, w = 1000, 1000  # Arbitrary for normalization
+        
+        # 1. Normalize points
+        pts1_norm, T1 = self.normalize_points(pts1, w, h)
+        pts2_norm, T2 = self.normalize_points(pts2, w, h)
+        
+        # 2. Build Constraint Matrix A
+        A = []
+        for i in range(len(pts1)):
+            u, v = pts1_norm[i]
+            u_p, v_p = pts2_norm[i]
+            A.append([u_p*u, u_p*v, u_p, v_p*u, v_p*v, v_p, u, v, 1])
+        A = np.array(A)
+        
+        # 3. SVD of A to find F
+        U, S, Vt = np.linalg.svd(A)
+        F_prime = Vt[-1].reshape(3, 3)
+        
+        # 4. Enforce Rank 2 Constraint
+        Uf, Sf, Vtf = np.linalg.svd(F_prime)
+        Sf[2] = 0  # Zero out smallest singular value
+        F_rank2 = Uf @ np.diag(Sf) @ Vtf
+        
+        # 5. De-normalize: F = T2' * F_rank2 * T1
+        F = T2.T @ F_rank2 @ T1
+        
+        # Normalize F so last element is 1
+        self.F_matrix = F / F[2, 2]
+        return self.F_matrix
+    
+    def compute_epipoles(self, F=None):
+        """
+        Computes epipoles using SVD.
+        Reference: Stereo Vision Slides, Page 33.
+        """
+        if F is None:
+            F = self.F_matrix
+            
+        # Epipole e1 (left) is null space of F: F * e1 = 0
+        U, S, Vt = np.linalg.svd(F)
+        e1 = Vt[-1]
+        e1 = e1 / e1[2]  # Normalize
+        
+        # Epipole e2 (right) is null space of F.T: F.T * e2 = 0
+        U, S, Vt = np.linalg.svd(F.T)
+        e2 = Vt[-1]
+        e2 = e2 / e2[2]  # Normalize
+        
+        self.epipoles = (e1, e2)
+        return e1, e2
+    
+    @staticmethod
+    def compute_epipolar_line(pt, F, which_image):
+        """
+        Computes the line equation ax + by + c = 0.
+        If pt is in image 1, line is in image 2: l' = F * p
+        If pt is in image 2, line is in image 1: l = F.T * p'
+        """
+        pt_h = np.array([pt[0], pt[1], 1])
+        
+        if which_image == 1:  # Point in Img1, line in Img2
+            line = F @ pt_h
+        else:  # Point in Img2, line in Img1
+            line = F.T @ pt_h
+            
+        return line
+    
+    @staticmethod
+    def calculate_distance_to_line(pt, line):
+        """Calculates geometric distance from point (x,y) to line ax+by+c=0"""
+        a, b, c = line
+        x, y = pt
+        return abs(a*x + b*y + c) / math.sqrt(a**2 + b**2)
+    
+    def match_feature_along_line(self, img1, img2, pt_clicked, F=None, window_size=15):
+        """
+        Searches for the corresponding point in img2 along the epipolar line.
+        Uses Sum of Squared Differences (SSD).
+        Reference: "Correspondence Problem", Slides 41-45.
+        """
+        if F is None:
+            F = self.F_matrix
+            
+        h, w, _ = img2.shape
+        
+        # 1. Get Epipolar Line in Image 2
+        line = self.compute_epipolar_line(pt_clicked, F, 1)
+        a, b, c = line
+        
+        # 2. Extract template from Image 1
+        x, y = pt_clicked
+        half_w = window_size // 2
+        
+        # Check bounds
+        if x < half_w or x >= w - half_w or y < half_w or y >= h - half_w:
+            return None
+        
+        template = img1[y-half_w:y+half_w+1, x-half_w:x+half_w+1].astype(np.float32)
+        
+        # 3. Scan along the epipolar line in Image 2
+        best_score = float('inf')
+        best_pt = None
+        
+        for x2 in range(half_w, w - half_w):
+            # Calculate y on the line: y = (-c - ax) / b
+            if abs(b) > 1e-5:
+                y2 = int((-c - a * x2) / b)
+            else:
+                continue  # Skip vertical lines
+                
+            if y2 < half_w or y2 >= h - half_w:
+                continue
+                
+            # Extract window in Image 2
+            patch = img2[y2-half_w:y2+half_w+1, x2-half_w:x2+half_w+1].astype(np.float32)
+            
+            # Compute SSD
+            score = np.sum((template - patch)**2)
+            
+            if score < best_score:
+                best_score = score
+                best_pt = (x2, y2)
+                
+        return best_pt
+    
+    @staticmethod
+    def analyze_region_type(img, pt, window_size=15):
+        """
+        Analyzes the type of region around a point.
+        Returns: region type and characteristics for discussion.
+        """
+        h, w = img.shape[:2]
+        x, y = pt
+        half_w = window_size // 2
+        
+        if x < half_w or x >= w - half_w or y < half_w or y >= h - half_w:
+            return "BORDER", {}
+        
+        # Extract window
+        window = img[y-half_w:y+half_w+1, x-half_w:x+half_w+1]
+        gray_window = cv2.cvtColor(window, cv2.COLOR_BGR2GRAY) if len(window.shape) == 3 else window
+        
+        # Calculate statistics
+        variance = np.var(gray_window)
+        std_dev = np.std(gray_window)
+        
+        # Calculate gradients
+        sobel_x = cv2.Sobel(gray_window, cv2.CV_64F, 1, 0, ksize=3)
+        sobel_y = cv2.Sobel(gray_window, cv2.CV_64F, 0, 1, ksize=3)
+        gradient_mag = np.sqrt(sobel_x**2 + sobel_y**2)
+        avg_gradient = np.mean(gradient_mag)
+        
+        # Harris corner response (simplified)
+        Ix2 = sobel_x ** 2
+        Iy2 = sobel_y ** 2
+        Ixy = sobel_x * sobel_y
+        
+        # Classify region
+        region_type = ""
+        if variance < 100:
+            region_type = "SMOOTH (Low texture)"
+        elif avg_gradient > 50:
+            # Check if corner or edge
+            det = (Ix2.mean() * Iy2.mean()) - (Ixy.mean() ** 2)
+            trace = Ix2.mean() + Iy2.mean()
+            if det > 0.01 * (trace ** 2):
+                region_type = "CORNER (High texture, directional change)"
+            else:
+                region_type = "EDGE (Strong gradient)"
+        else:
+            region_type = "TEXTURED (Moderate variation)"
+        
+        stats = {
+            'variance': variance,
+            'std_dev': std_dev,
+            'avg_gradient': avg_gradient,
+            'type': region_type
+        }
+        
+        return region_type, stats
+    
+    def compute_accuracy(self, test_pts1, test_pts2, F=None):
+        """
+        Computes accuracy metrics for test points.
+        Returns list of distances and average error.
+        """
+        if F is None:
+            F = self.F_matrix
+            
+        distances = []
+        for pt1, pt2 in zip(test_pts1, test_pts2):
+            line = self.compute_epipolar_line(pt1, F, 1)
+            dist = self.calculate_distance_to_line(pt2, line)
+            distances.append(dist)
+        
+        avg_error = np.mean(distances) if distances else 0
+        return distances, avg_error
+    
+    def generate_report(self, ctrl_pts1, ctrl_pts2, test_pts1, test_pts2):
+        """
+        Generates a comprehensive text report of the stereo system.
+        """
+        report = []
+        report.append("=" * 60)
+        report.append("STEREO VISION SYSTEM - SUMMARY REPORT")
+        report.append("=" * 60)
+        
+        report.append("\n1. FUNDAMENTAL MATRIX ESTIMATION")
+        report.append(f"   - Control points used: {len(ctrl_pts1)}")
+        report.append(f"   - Test points: {len(test_pts1)}")
+        report.append("   - Fundamental Matrix F:")
+        for row in self.F_matrix:
+            report.append(f"     [{row[0]:12.8e} {row[1]:12.8e} {row[2]:12.8e}]")
+        
+        e1, e2 = self.epipoles
+        report.append("\n2. EPIPOLES")
+        report.append(f"   - Left epipole:  ({e1[0]:.2f}, {e1[1]:.2f})")
+        report.append(f"   - Right epipole: ({e2[0]:.2f}, {e2[1]:.2f})")
+        
+        if len(test_pts1) > 0:
+            distances, avg_error = self.compute_accuracy(test_pts1, test_pts2)
+            report.append("\n3. ACCURACY ANALYSIS")
+            report.append(f"   - Average epipolar line distance: {avg_error:.4f} pixels")
+            report.append(f"   - Min distance: {min(distances):.4f} pixels")
+            report.append(f"   - Max distance: {max(distances):.4f} pixels")
+        
+        
+        report.append("\n" + "=" * 60)
+        
+        return "\n".join(report)
+

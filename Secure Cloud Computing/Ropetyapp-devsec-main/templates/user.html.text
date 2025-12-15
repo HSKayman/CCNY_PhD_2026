@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>RoboPety</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static',
+    filename='user.css') }}"
+    />
+    <link
+      href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="background-gradient"></div>
+    <div class="dashboard">
+      <header class="dashboard-header">
+        <h1 id="username-display" class="username">{{ username }}</h1>
+        <button id="logout-p" class="logout-btn">Log out</button>
+      </header>
+      <div class="pane">
+        <div class="left-pane">
+          <div class="my-robopet card">
+            <h3>My RoboPet</h3>
+            {% if currentPet %}
+            <div class="robopet current-robopet" id="user-robot">
+              <img
+                src="{{ currentPet['image'] }}"
+                alt="RoboPet"
+                class="robopet-image"
+              />
+              <p class="robopet-name">{{ currentPet['name'] }}</p>
+            </div>
+            <button class="btn-return" id="btn-return">Return</button>
+            {% else %}
+              <div class="robopet no-robopet" id="user-robot">
+                <p>You do not have a RoboPet yet.</p>
+              </div>
+            {% endif %}
+          </div>
+          <div class="search-box card">
+            <div class="search-container">
+              <i class="bx bx-search-alt-2 search-icon"></i>
+              <input
+                type="text"
+                class="search-field"
+                id="search-field"
+                placeholder="Search RoboPets..."
+              />
+            </div>
+          </div>
+        </div>
+        <div class="right-pane">
+          <h3 class="section-title">Available Robots</h3>
+          <div class="robopet-list">
+            <ul id="filtered-list">
+              {% for pet in pets %}
+              <li>
+                <div class="robopet-item">
+                  <img
+                    src="{{ pet['image']}}"
+                    alt="RoboPet"
+                    class="robopet-image-small"
+                  />
+                  <p class="robopet-name-small">{{ pet['name']}}</p>
+                  {% if currentPet %}
+                  {% else %}
+                    <button class="btn-select" id="btn-select-{{pet['name']}}">Select</button>
+                  {% endif %}  
+                </div>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</html>

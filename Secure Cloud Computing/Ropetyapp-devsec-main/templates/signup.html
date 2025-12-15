@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="RoboPety - Create a secure account to manage your robot pets" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="google" content="notranslate" />
+    <link rel="canonical" href="https://melodic-voice-475605-d2.uc.r.appspot.com/signup" />
+    <title>Robopety - Sign Up</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='signup.css') }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div class="container">
+      <div class="form-wrapper">
+        <div style="text-align: center; margin-bottom: 8px;">
+          <div style="font-size: 3.5rem; margin-bottom: 8px;">🤖</div>
+          <h1>RoboPety</h1>
+        </div>
+        <p class="subtitle">Create your account to get started</p>
+        <form id="signupForm" method="post" action="/usersignup" autocomplete="on">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-box">
+              <input type="email" placeholder="Enter your email" id="email" name="email" autocomplete="email" required />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-box">
+              <input type="text" placeholder="Choose a username" id="username" name="username" autocomplete="username" required />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="password_1">Password</label>
+            <div class="input-box password-input">
+              <input type="password" placeholder="Create a password" id="password_1" name="password_1" autocomplete="new-password" required />
+              <button type="button" class="toggle-password" id="togglePassword1" aria-label="Toggle password visibility">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+            <small class="password-hint">Must be 8+ chars with uppercase, lowercase, number, and special character</small>
+          </div>
+          
+          <div class="form-group">
+            <label for="password_2">Confirm Password</label>
+            <div class="input-box password-input">
+              <input type="password" placeholder="Confirm your password" id="password_2" name="password_2" autocomplete="new-password" required />
+              <button type="button" class="toggle-password" id="togglePassword2" aria-label="Toggle password visibility">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <button class="btn" type="submit">Sign Up</button>
+        </form>
+        <div class="register-link">
+          <p>Already have an account? <a href="/login">Login</a></p>
+        </div>
+        <p class="error" id="errorText"></p>
+      </div>
+    </div>
+    <script>
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

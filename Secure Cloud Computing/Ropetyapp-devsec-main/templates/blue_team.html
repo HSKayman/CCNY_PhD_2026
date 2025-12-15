@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="RoboPety - Blue Team Security Dashboard" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>RoboPety - Blue Team Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='blue_team.css') }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="blue-team-dashboard">
+      <header class="blue-team-header">
+        <div class="header-left">
+          <h1><i class="bx bx-shield-alt-2"></i> Blue Team Security Dashboard</h1>
+          <p class="team-member-name">Welcome, {{ username|e }}</p>
+        </div>
+        <div class="header-right">
+          <a href="{{ url_for('logout') }}" class="logout-btn">
+            <i class="bx bx-log-out"></i> Logout
+          </a>
+        </div>
+      </header>
+
+      <div class="blue-team-content">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card critical">
+            <div class="stat-icon">
+              <i class="bx bx-error-circle"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="critical-events">0</h3>
+              <p>Critical Events</p>
+            </div>
+          </div>
+          <div class="stat-card high">
+            <div class="stat-icon">
+              <i class="bx bx-error"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="high-events">0</h3>
+              <p>High Priority</p>
+            </div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-icon">
+              <i class="bx bx-time-five"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="unresolved-events">0</h3>
+              <p>Unresolved</p>
+            </div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-icon">
+              <i class="bx bx-bar-chart-alt-2"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="events-24h">0</h3>
+              <p>Events (24h)</p>
+            </div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-icon">
+              <i class="bx bx-user-check"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="active-users-24h">0</h3>
+              <p>Active Users (24h)</p>
+            </div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-icon">
+              <i class="bx bx-lock-open-alt"></i>
+            </div>
+            <div class="stat-info">
+              <h3 id="failed-logins-24h">0</h3>
+              <p>Failed Logins (24h)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="analytics">
+              <i class="bx bx-line-chart"></i> Analytics
+            </button>
+            <button class="tab-btn" data-tab="security-events">
+              <i class="bx bx-shield-quarter"></i> Security Events
+            </button>
+            <button class="tab-btn" data-tab="activity-logs">
+              <i class="bx bx-list-ul"></i> Activity Logs
+            </button>
+            <button class="tab-btn" data-tab="robopets-analytics">
+              <i class="bx bx-robot"></i> RoboPets Analytics
+            </button>
+            <button class="tab-btn" data-tab="gcp-logs">
+              <i class="bx bx-server"></i> GCP Event Logs
+            </button>
+            <button class="tab-btn" data-tab="chat">
+              <i class="bx bx-message-dots"></i> Chat with Admin
+            </button>
+          </div>
+
+          <!-- Analytics Tab -->
+          <div class="tab-content active" id="analytics-tab">
+            <div class="analytics-header">
+              <h2><i class="bx bx-line-chart"></i> Security Analytics</h2>
+              <button class="download-btn" onclick="downloadAnalytics()">
+                <i class="bx bx-download"></i> Download Report
+              </button>
+            </div>
+            
+            <div class="charts-grid">
+              <div class="chart-card">
+                <h3>Events by Severity</h3>
+                <canvas id="severityChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h3>Events by Type</h3>
+                <canvas id="eventTypeChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h3>Activity Types</h3>
+                <canvas id="activityTypeChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h3>Events Timeline (7 days)</h3>
+                <canvas id="timelineChart"></canvas>
+              </div>
+            </div>
+
+            <div class="analytics-summary">
+              <div class="summary-card">
+                <h3><i class="bx bx-info-circle"></i> Summary</h3>
+                <div class="summary-content">
+                  <div class="summary-item">
+                    <span class="label">Total Security Events:</span>
+                    <span class="value" id="total-events">0</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Total Activity Logs:</span>
+                    <span class="value" id="total-activities">0</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Total Users:</span>
+                    <span class="value" id="total-users">0</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Events Last 7 Days:</span>
+                    <span class="value" id="events-7d">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security Events Tab -->
+          <div class="tab-content" id="security-events-tab">
+            <div class="events-header">
+              <h2><i class="bx bx-shield-quarter"></i> Security Events</h2>
+              <div class="events-filters">
+                <select id="severity-filter" onchange="loadSecurityEvents()">
+                  <option value="">All Severities</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+                <select id="resolved-filter" onchange="loadSecurityEvents()">
+                  <option value="">All Status</option>
+                  <option value="false">Unresolved</option>
+                  <option value="true">Resolved</option>
+                </select>
+                <button class="refresh-btn" onclick="loadSecurityEvents()">
+                  <i class="bx bx-refresh"></i> Refresh
+                </button>
+              </div>
+            </div>
+            
+            <div class="events-table-container">
+              <table class="events-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Severity</th>
+                    <th>Description</th>
+                    <th>IP Address</th>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="security-events-tbody">
+                  <tr>
+                    <td colspan="9" class="loading">Loading security events...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Activity Logs Tab -->
+          <div class="tab-content" id="activity-logs-tab">
+            <div class="logs-header">
+              <h2><i class="bx bx-list-ul"></i> Activity Logs</h2>
+              <div class="logs-filters">
+                <input type="text" id="activity-search" placeholder="Search logs..." onkeyup="filterActivityLogs()">
+                <select id="activity-type-filter" onchange="loadActivityLogs()">
+                  <option value="">All Types</option>
+                </select>
+                <button class="download-btn" onclick="downloadActivityLogs()">
+                  <i class="bx bx-download"></i> Download CSV
+                </button>
+                <button class="refresh-btn" onclick="loadActivityLogs()">
+                  <i class="bx bx-refresh"></i> Refresh
+                </button>
+              </div>
+            </div>
+            
+            <div class="logs-table-container">
+              <table class="logs-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Activity Type</th>
+                    <th>Description</th>
+                    <th>IP Address</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="activity-logs-tbody">
+                  <tr>
+                    <td colspan="6" class="loading">Loading activity logs...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- RoboPets Analytics Tab -->
+          <div class="tab-content" id="robopets-analytics-tab">
+            <div class="analytics-header">
+              <h2><i class="bx bx-robot"></i> RoboPets Analytics</h2>
+              <div style="display: flex; gap: 10px;">
+                <button class="download-btn" onclick="downloadRoboPetsAnalytics()">
+                  <i class="bx bx-download"></i> Download Report
+                </button>
+                <button class="refresh-btn" onclick="loadRoboPetsAnalytics()">
+                  <i class="bx bx-refresh"></i> Refresh
+                </button>
+              </div>
+            </div>
+            
+            <div class="stats-grid" style="margin-bottom: 30px;">
+              <div class="stat-card info">
+                <div class="stat-icon">
+                  <i class="bx bx-robot"></i>
+                </div>
+                <div class="stat-info">
+                  <h3 id="total-robots">0</h3>
+                  <p>Total RoboPets</p>
+                </div>
+              </div>
+              <div class="stat-card success">
+                <div class="stat-icon">
+                  <i class="bx bx-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                  <h3 id="available-robots">0</h3>
+                  <p>Available</p>
+                </div>
+              </div>
+              <div class="stat-card warning">
+                <div class="stat-icon">
+                  <i class="bx bx-bookmark"></i>
+                </div>
+                <div class="stat-info">
+                  <h3 id="booked-robots">0</h3>
+                  <p>Currently Booked</p>
+                </div>
+              </div>
+              <div class="stat-card danger">
+                <div class="stat-icon">
+                  <i class="bx bx-wrench"></i>
+                </div>
+                <div class="stat-info">
+                  <h3 id="maintenance-robots">0</h3>
+                  <p>In Maintenance</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="charts-grid">
+              <div class="chart-card">
+                <h3>RoboPets by Status</h3>
+                <canvas id="robotStatusChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h3>Booking Activity (Last 7 Days)</h3>
+                <canvas id="bookingActivityChart"></canvas>
+              </div>
+              <div class="chart-card">
+                <h3>Most Popular RoboPets</h3>
+                <canvas id="popularRobotsChart"></canvas>
+              </div>
+            </div>
+
+            <div class="analytics-summary">
+              <div class="summary-card">
+                <h3><i class="bx bx-info-circle"></i> RoboPets Summary</h3>
+                <div class="summary-content">
+                  <div class="summary-item">
+                    <span class="label">Total Bookings (All Time):</span>
+                    <span class="value" id="total-bookings-all">0</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Active Users with RoboPets:</span>
+                    <span class="value" id="active-users-with-robots">0</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Bookings Last 24h:</span>
+                    <span class="value" id="bookings-24h">0</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">Bookings Last 7 Days:</span>
+                    <span class="value" id="bookings-7d">0</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- GCP Event Logs Tab -->
+          <div class="tab-content" id="gcp-logs-tab">
+            <div class="logs-header">
+              <h2><i class="bx bx-server"></i> GCP Event Logs (Real-time)</h2>
+              <div class="logs-filters">
+                <select id="log-level-filter" onchange="loadGCPLogs()">
+                  <option value="">All Levels</option>
+                  <option value="ERROR">Error</option>
+                  <option value="WARNING">Warning</option>
+                  <option value="INFO">Info</option>
+                  <option value="DEBUG">Debug</option>
+                </select>
+                <select id="log-service-filter" onchange="loadGCPLogs()">
+                  <option value="">All Services</option>
+                  <option value="default">App Engine</option>
+                  <option value="main">Main Service</option>
+                </select>
+                <input type="number" id="log-limit" value="50" min="10" max="500" placeholder="Limit" style="width: 80px;">
+                <button class="refresh-btn" onclick="loadGCPLogs()">
+                  <i class="bx bx-refresh"></i> Refresh
+                </button>
+                <label style="display: flex; align-items: center; gap: 5px; color: var(--text-secondary);">
+                  <input type="checkbox" id="auto-refresh-logs" onchange="toggleAutoRefresh()">
+                  Auto-refresh (30s)
+                </label>
+              </div>
+            </div>
+            
+            <div class="logs-table-container">
+              <table class="logs-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Level</th>
+                    <th>Service</th>
+                    <th>Message</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="gcp-logs-tbody">
+                  <tr>
+                    <td colspan="5" class="loading">Loading GCP logs...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Chat Tab -->
+          <div class="tab-content" id="chat-tab">
+            <div class="chat-header">
+              <h2><i class="bx bx-message-dots"></i> Chat with Admin</h2>
+              <button class="refresh-btn" onclick="loadChatMessages()">
+                <i class="bx bx-refresh"></i> Refresh
+              </button>
+            </div>
+            
+            <div class="chat-container">
+              <div class="chat-messages" id="chat-messages">
+                <div class="chat-empty">
+                  <i class="bx bx-message-dots"></i>
+                  <p>No messages yet. Start a conversation with the admin.</p>
+                </div>
+              </div>
+              
+              <div class="chat-input-container">
+                <input type="text" id="chat-message-input" placeholder="Type your message to admin..." maxlength="1000">
+                <button class="send-btn" onclick="sendChatMessage()">
+                  <i class="bx bx-send"></i> Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='blue_team.js') }}"></script>
+  </body>
+</html>
+

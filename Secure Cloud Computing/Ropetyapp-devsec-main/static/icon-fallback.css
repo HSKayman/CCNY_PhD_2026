@@ -1,0 +1,57 @@
+/* Icon fallback styles - prevents white squares when Boxicons fails to load */
+
+/* Ensure Boxicons font is loaded properly */
+@font-face {
+    font-family: 'boxicons';
+    src: url('https://unpkg.com/boxicons@2.1.4/fonts/boxicons.eot');
+    src: url('https://unpkg.com/boxicons@2.1.4/fonts/boxicons.eot?#iefix') format('embedded-opentype'),
+         url('https://unpkg.com/boxicons@2.1.4/fonts/boxicons.woff2') format('woff2'),
+         url('https://unpkg.com/boxicons@2.1.4/fonts/boxicons.woff') format('woff'),
+         url('https://unpkg.com/boxicons@2.1.4/fonts/boxicons.ttf') format('truetype'),
+         url('https://cdn.jsdelivr.net/npm/boxicons@2.1.4/fonts/boxicons.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Hide white squares - ensure icons have proper styling */
+.bx,
+[class^="bx-"],
+[class*=" bx-"] {
+    display: inline-block;
+    font-family: 'boxicons' !important;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+    vertical-align: middle;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Fallback: Hide icon if font doesn't load (prevent white squares) */
+.bx:not([class*="bx-"]) {
+    visibility: hidden;
+}
+
+/* Common icon fixes */
+.bx-shield-quarter::before { content: "\ea4b"; }
+.bx-log-out::before { content: "\ec4f"; }
+.bx-search::before { content: "\eb94"; }
+.bx-search-alt-2::before { content: "\eb95"; }
+.bx-bell::before { content: "\ead0"; }
+.bx-check::before { content: "\eb80"; }
+.bx-check-circle::before { content: "\eb7f"; }
+.bx-error-circle::before { content: "\eba9"; }
+.bx-info-circle::before { content: "\ebc4"; }
+.bx-undo::before { content: "\ed0f"; }
+
+
+
+
+
+
+
+
+

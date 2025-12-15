@@ -1,0 +1,22 @@
+[package]
+name = "glucoguard"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+diagnostic_mode = []
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+sha2 = "0.10.0"
+rusqlite = { version = "0.37.0", features = ["bundled"] }
+uuid = { version = "1", features = ["v4"] }
+argon2 = "0.5"
+rand = "0.8" 
+chrono = { version = "0.4", features = ["serde", "clock"] }
+dotenv = "0.15"
+rpassword = "7.3"
+regex = "1.11.1"
+hex = "0.4.3"
+
+[build-dependencies]

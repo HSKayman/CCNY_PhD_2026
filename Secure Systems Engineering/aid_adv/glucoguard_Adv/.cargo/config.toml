@@ -1,0 +1,2 @@
+[alias]
+RRun = "run --features diagnostic_mode"

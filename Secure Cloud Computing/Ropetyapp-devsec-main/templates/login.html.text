@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Robopety</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static',
+    filename='login.css') }}"
+    />
+  </head>
+  <body>
+    <div class="background-gradient"></div>
+    <div class="container">
+      <div class="login-card">
+        <h1 class="logo">RoboPety</h1>
+        <p class="subtitle">Welcome back! Please login to continue.</p>
+        <form id="loginForm" method="post">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-box">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                id="email"
+                name="email"
+                value="{{ request.form.email }}"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-box">
+              <input
+                type="password"
+                placeholder="Enter your password"
+                id="password"
+                name="password"
+                value="{{ request.form.password }}"
+                required
+              />
+            </div>
+          </div>
+          <button class="btn" type="submit">Login</button>
+        </form>
+        <div class="register-link">
+          <p>Don't have an account? <a href="/signup">Sign up</a></p>
+        </div>
+        <p class="error" id="errorText"></p>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

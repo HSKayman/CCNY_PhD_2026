@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="RoboPety - Secure login to manage your robot pets" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="google" content="notranslate" />
+    <link rel="canonical" href="https://melodic-voice-475605-d2.uc.r.appspot.com/login" />
+    <title>Robopety - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google reCAPTCHA v2 -->
+    {% if recaptcha_site_key and recaptcha_site_key != "" %}
+    <script src="https://www.google.com/recaptcha/api.js?onload=onloadRecaptchaCallback&render=explicit" async defer></script>
+    {% endif %}
+  </head>
+  <body>
+    <div class="container">
+      <div class="form-wrapper">
+        <div style="text-align: center; margin-bottom: 8px;">
+          <div style="font-size: 3.5rem; margin-bottom: 8px;">🤖</div>
+          <h1>RoboPety</h1>
+        </div>
+        <p class="subtitle">Welcome back! Please sign in to continue</p>
+        <form id="loginForm" method="post" action="/userlogin" autocomplete="on">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-box">
+              <input type="email" placeholder="Enter your email" id="email" name="email" autocomplete="email" required />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-box password-input">
+              <input type="password" placeholder="Enter your password" id="password" name="password" autocomplete="current-password" required />
+              <button type="button" class="toggle-password" id="togglePassword" aria-label="Toggle password visibility">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {% if recaptcha_site_key and recaptcha_site_key != "" %}
+          <div class="recaptcha-container">
+            <div id="recaptcha-widget"></div>
+          </div>
+          {% endif %}
+
+          <button class="btn" type="submit">Login</button>
+        </form>
+        
+        <!-- 2FA Verification Section (hidden by default) -->
+        <div id="twoFactorSection" style="display: none;">
+          <h2>Two-Factor Authentication</h2>
+          <p class="subtitle">Enter the 6-digit code from your authenticator app</p>
+          <form id="twoFactorForm" method="post" action="/verify-2fa">
+            <div class="form-group">
+              <label for="totpCode">Verification Code</label>
+              <div class="input-box">
+                <input 
+                  type="text" 
+                  id="totpCode" 
+                  name="code" 
+                  placeholder="000000" 
+                  maxlength="8" 
+                  pattern="[0-9]{6,8}" 
+                  autocomplete="one-time-code"
+                  required 
+                  style="text-align: center; font-size: 24px; letter-spacing: 8px; font-family: 'Courier New', monospace;"
+                />
+              </div>
+            </div>
+            <button class="btn" type="submit">Verify</button>
+            <button type="button" class="btn" id="cancel2FA" style="background: #636E72; margin-top: 10px;">Cancel</button>
+          </form>
+        </div>
+        
+        <div class="register-link">
+          <p>Don't have an account? <a href="/signup">Sign up</a></p>
+        </div>
+        <p class="error" id="errorText"></p>
+      </div>
+    </div>
+    <script>
+      // reCAPTCHA configuration and rendering
+      {% if recaptcha_site_key and recaptcha_site_key != "" %}
+      window.recaptchaEnabled = true;
+      window.recaptchaSiteKey = "{{ recaptcha_site_key }}";
+      
+      // Store widget ID globally for form submission
+      window.recaptchaWidgetId = null;
+      
+      // Callback function to render reCAPTCHA widget after script loads
+      function onloadRecaptchaCallback() {
+        console.log("reCAPTCHA: onloadRecaptchaCallback called");
+        var widget = document.getElementById('recaptcha-widget');
+        if (widget && typeof grecaptcha !== 'undefined' && grecaptcha.render) {
+          try {
+            window.recaptchaWidgetId = grecaptcha.render('recaptcha-widget', {
+              'sitekey': window.recaptchaSiteKey,
+              'theme': 'light',
+              'callback': function() {
+                console.log("reCAPTCHA: Widget completed successfully");
+              },
+              'expired-callback': function() {
+                console.warn("reCAPTCHA: Widget expired");
+              },
+              'error-callback': function() {
+                console.error("reCAPTCHA: Widget error occurred");
+              }
+            });
+            // Store widget ID in data attribute for easy access
+            widget.dataset.widgetId = window.recaptchaWidgetId;
+            console.log("reCAPTCHA: Widget rendered with ID:", window.recaptchaWidgetId);
+          } catch (e) {
+            console.error("reCAPTCHA: Error rendering widget:", e);
+          }
+        } else {
+          console.warn("reCAPTCHA: Widget element or grecaptcha not available");
+        }
+      }
+      
+      // Fallback: If callback doesn't fire, try rendering after DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            if (window.recaptchaEnabled && typeof grecaptcha !== 'undefined' && !window.recaptchaWidgetId) {
+              console.log("reCAPTCHA: Fallback render attempt");
+              onloadRecaptchaCallback();
+            }
+          }, 1000);
+        });
+      }
+      {% else %}
+      window.recaptchaEnabled = false;
+      {% endif %}
+    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>

@@ -1,0 +1,441 @@
+"""
+Stereo Vision GUI Module
+Handles all visualization and user interaction:
+- Mouse callbacks
+- Image display
+- Epipolar line drawing
+- Result visualization
+"""
+
+import cv2
+import numpy as np
+import math
+from stereo_logic import StereoVision
+
+
+class StereoGUI:
+    """
+    GUI class for stereo vision system.
+    Manages display, user input, and visualization.
+    """
+    
+    def __init__(self, img1_path, img2_path, resize_factor=0.5):
+        # Load and resize images
+        self.img1_original = cv2.imread(img1_path)
+        self.img2_original = cv2.imread(img2_path)
+        
+        if self.img1_original is None or self.img2_original is None:
+            raise ValueError("Could not load images")
+        
+        self.img1 = cv2.resize(self.img1_original, (0, 0), fx=resize_factor, fy=resize_factor)
+        self.img2 = cv2.resize(self.img2_original, (0, 0), fx=resize_factor, fy=resize_factor)
+        
+        # Create side-by-side view
+        self.img_combined = np.hstack((self.img1, self.img2))
+        self.img_display = None
+        
+        # State variables
+        self.ref_points_1 = []  # Left image points
+        self.ref_points_2 = []  # Right image points
+        self.test_mode = False
+        self.manual_match_mode = False
+        self.manual_match_point = None
+        
+        # Stereo vision logic
+        self.stereo = StereoVision()
+        
+        # Window setup
+        cv2.namedWindow("Stereo Lab")
+        cv2.setMouseCallback("Stereo Lab", self._mouse_callback)
+        
+    def _mouse_callback(self, event, x, y, flags, param):
+        """Internal mouse callback handler"""
+        if event == cv2.EVENT_LBUTTONDOWN:
+            if not self.test_mode:
+                self._handle_calibration_click(x, y)
+            else:
+                self._handle_test_click(x, y)
+    
+    def _handle_calibration_click(self, x, y):
+        """Handle mouse clicks during calibration phase"""
+        w = self.img1.shape[1]
+        
+        if len(self.ref_points_1) == len(self.ref_points_2):
+            # Time to click on LEFT image
+            if x >= w:
+                print("ERROR: Please click on the LEFT image first!")
+                return
+                
+            self.ref_points_1.append((x, y))
+            print(f"Point {len(self.ref_points_1)} on Left Image recorded: ({x},{y}). Now click corresponding point on Right.")
+            cv2.circle(self.img_combined, (x, y), 5, (0, 0, 255), -1)
+        else:
+            # Time to click on RIGHT image
+            if x < w:
+                print("ERROR: Please click on the RIGHT image now!")
+                return
+                
+            real_x = x - w
+            self.ref_points_2.append((real_x, y))
+            print(f"Point {len(self.ref_points_2)} on Right Image recorded: ({real_x},{y}).")
+            cv2.circle(self.img_combined, (x, y), 5, (0, 255, 0), -1)
+            
+            if len(self.ref_points_1) >= 8:
+                print("--- 8 Points collected. Press 'c' to Compute F or click more for better accuracy ---")
+            
+            # Auto-calculate after 18 points
+            if len(self.ref_points_1) == 18:
+                print("\n[AUTO] 18 Points collected! Auto-calculating Fundamental Matrix...")
+                self._compute_fundamental_matrix()
+        
+        cv2.imshow("Stereo Lab", self.img_combined)
+    
+    def _handle_test_click(self, x, y):
+        """Handle mouse clicks during testing phase"""
+        w = self.img1.shape[1]
+        
+        # Check if waiting for manual match input
+        if self.manual_match_mode and self.manual_match_point is not None:
+            if x >= w:
+                real_x = x - w
+                self._compare_manual_match((real_x, y))
+            else:
+                print("Please click on the RIGHT image for manual match.")
+            return
+        
+        if x < w:  # Clicked on Left Image
+            print(f"\n[SEARCH] Searching match for LEFT point: ({x}, {y})...")
+            
+            # Analyze region type
+            region_type, stats = self.stereo.analyze_region_type(self.img1, (x, y))
+            print(f"[ANALYSIS] Region Analysis: {region_type}")
+            print(f"           Variance: {stats['variance']:.2f}, Gradient: {stats['avg_gradient']:.2f}")
+            
+            # Start with clean image
+            img_show = self.img_combined.copy()
+            
+            # Find match
+            match_pt = self.stereo.match_feature_along_line(self.img1, self.img2, (x, y))
+            
+            if match_pt:
+                self._display_match(img_show, (x, y), match_pt, region_type)
+                
+                # Store for manual comparison if 'm' key was pressed
+                if self.manual_match_mode:
+                    self.manual_match_point = {
+                        'clicked': (x, y),
+                        'auto_match': match_pt
+                    }
+                    print("\n[MANUAL] Now click on the RIGHT image where YOU think the match is...")
+                    print("         (This allows comparison between automatic and manual matching)")
+            else:
+                print("[ERROR] Match not found (out of bounds).")
+                self.img_display = img_show
+                cv2.imshow("Stereo Lab", self.img_display)
+        else:
+            print("[WARNING] Please click on the LEFT image to find matches.")
+    
+    def _display_match(self, img_show, clicked_pt, match_pt, region_type):
+        """Display the matched points with visualization"""
+        x, y = clicked_pt
+        mx, my = match_pt
+        w = self.img1.shape[1]
+        
+        print(f"[SUCCESS] Match found at RIGHT point: ({mx}, {my})")
+        print(f"[MATCH] Matched Coordinates: LEFT({x}, {y}) <-> RIGHT({mx}, {my})")
+        
+        # Draw Epipolar Line on Right Image (YELLOW)
+        line = self.stereo.compute_epipolar_line((x, y), self.stereo.F_matrix, 1)
+        x0, y0 = 0, int(-line[2]/line[1])
+        x1, y1 = self.img2.shape[1], int(-(line[2] + line[0]*self.img2.shape[1])/line[1])
+        cv2.line(img_show, (x0 + w, y0), (x1 + w, y1), (0, 255, 255), 2)
+        
+        # Draw connecting line (MAGENTA)
+        mx_display = mx + w
+        cv2.line(img_show, (x, y), (mx_display, my), (255, 0, 255), 3)
+        
+        # Draw LEFT point (BLUE)
+        cv2.circle(img_show, (x, y), 15, (255, 0, 0), -1)
+        cv2.circle(img_show, (x, y), 17, (255, 255, 255), 3)
+        cv2.circle(img_show, (x, y), 3, (255, 255, 255), -1)
+        
+        # Draw RIGHT matched point (GREEN)
+        cv2.circle(img_show, (mx_display, my), 15, (0, 255, 0), -1)
+        cv2.circle(img_show, (mx_display, my), 17, (255, 255, 255), 3)
+        cv2.circle(img_show, (mx_display, my), 3, (255, 255, 255), -1)
+        
+        # Add crosshair on matched point
+        cv2.drawMarker(img_show, (mx_display, my), (0, 0, 255), 
+                      cv2.MARKER_CROSS, 30, 3)
+        
+        # Display coordinates on image
+        self._add_text_overlay(img_show, x, y, mx, my, region_type)
+        
+        self.img_display = img_show
+        cv2.imshow("Stereo Lab", self.img_display)
+    
+    def _add_text_overlay(self, img, x, y, mx, my, region_type):
+        """Add text overlay with coordinates and region info"""
+        overlay = img.copy()
+        
+        text1 = f"LEFT ({x}, {y})  <-->  RIGHT ({mx}, {my})"
+        text2 = f"Region: {region_type}"
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.6
+        thickness = 2
+        
+        # Get text sizes
+        (text1_width, text1_height), baseline1 = cv2.getTextSize(text1, font, font_scale, thickness)
+        (text2_width, text2_height), baseline2 = cv2.getTextSize(text2, font, 0.5, 1)
+        
+        # Position at top center
+        text1_x = (img.shape[1] - text1_width) // 2
+        text1_y = 30
+        text2_x = (img.shape[1] - text2_width) // 2
+        text2_y = text1_y + text1_height + 15
+        
+        # Draw background rectangle
+        cv2.rectangle(overlay, 
+                    (text1_x - 10, text1_y - text1_height - 8),
+                    (text2_x + text2_width + 10, text2_y + baseline2 + 5),
+                    (0, 0, 0), -1)
+        
+        # Blend overlay
+        cv2.addWeighted(overlay, 0.7, img, 0.3, 0, img)
+        
+        # Draw texts
+        cv2.putText(img, text1, (text1_x, text1_y),
+                   font, font_scale, (0, 255, 255), thickness, cv2.LINE_AA)
+        cv2.putText(img, text2, (text2_x, text2_y),
+                   font, 0.5, (255, 255, 0), 1, cv2.LINE_AA)
+    
+    def _compare_manual_match(self, manual_pt):
+        """Compare manual match with automatic match"""
+        auto_pt = self.manual_match_point['auto_match']
+        clicked_pt = self.manual_match_point['clicked']
+        
+        # Calculate distance
+        dist_auto = math.sqrt((auto_pt[0] - manual_pt[0])**2 + (auto_pt[1] - manual_pt[1])**2)
+        
+        print(f"\n=== MANUAL vs AUTOMATIC COMPARISON ===")
+        print(f"Left Point: {clicked_pt}")
+        print(f"Automatic Match: {auto_pt}")
+        print(f"Your Manual Match: {manual_pt}")
+        print(f"Distance between Auto and Manual: {dist_auto:.2f} pixels")
+        
+        # Draw comparison
+        img_show = self.img_combined.copy()
+        w = self.img1.shape[1]
+        
+        # Draw clicked point
+        cv2.circle(img_show, clicked_pt, 10, (255, 0, 0), 2)
+        
+        # Draw automatic match (GREEN)
+        auto_display = (auto_pt[0] + w, auto_pt[1])
+        cv2.circle(img_show, auto_display, 10, (0, 255, 0), 2)
+        cv2.putText(img_show, "AUTO", (auto_display[0]+12, auto_display[1]), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        
+        # Draw manual match (CYAN)
+        manual_display = (manual_pt[0] + w, manual_pt[1])
+        cv2.circle(img_show, manual_display, 10, (255, 255, 0), 2)
+        cv2.putText(img_show, "MANUAL", (manual_display[0]+12, manual_display[1]), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+        
+        # Draw epipolar line
+        line = self.stereo.compute_epipolar_line(clicked_pt, self.stereo.F_matrix, 1)
+        x0, y0 = 0, int(-line[2]/line[1])
+        x1, y1 = self.img2.shape[1], int(-(line[2] + line[0]*self.img2.shape[1])/line[1])
+        cv2.line(img_show, (x0 + w, y0), (x1 + w, y1), (0, 255, 255), 1)
+        
+        # Add text
+        text = f"Auto vs Manual: {dist_auto:.1f}px difference"
+        cv2.putText(img_show, text, (10, 30),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        
+        self.img_display = img_show
+        cv2.imshow("Stereo Lab", self.img_display)
+        
+        self.manual_match_mode = False
+        self.manual_match_point = None
+        print("Press 'm' on a new point to compare again, or continue normal matching.")
+    
+    def _compute_fundamental_matrix(self):
+        """Compute fundamental matrix and display results"""
+        ctrl_p1 = self.ref_points_1[:8]
+        ctrl_p2 = self.ref_points_2[:8]
+        test_p1 = self.ref_points_1[8:]
+        test_p2 = self.ref_points_2[8:]
+        
+        print(f"\nComputing F using {len(ctrl_p1)} control points...")
+        self.stereo.compute_fundamental_matrix(ctrl_p1, ctrl_p2)
+        
+        print("\nFundamental Matrix F:")
+        print(self.stereo.F_matrix)
+        
+        e1, e2 = self.stereo.compute_epipoles()
+        print(f"\nEpipole Left: {e1}")
+        print(f"Epipole Right: {e2}")
+        
+        # Check Accuracy
+        if len(test_p1) > 0:
+            distances, avg_error = self.stereo.compute_accuracy(test_p1, test_p2)
+            print("\nAccuracy Check (Distance to Epipolar Line):")
+            for i, dist in enumerate(distances):
+                print(f"Test Point {i+1}: Distance = {dist:.4f} pixels")
+            print(f"Average Error: {avg_error:.4f} pixels")
+        else:
+            print("\nNo extra points clicked for testing. (Click more than 8 next time!)")
+        
+        # Draw and display epipolar lines overlay
+        print("\n--- Generating Epipolar Lines Overlay ---")
+        self._show_epipolar_lines(ctrl_p1, ctrl_p2, test_p1, test_p2)
+        
+        # Clean the pictures
+        self.img_combined = np.hstack((self.img1, self.img2))
+        self.img_display = self.img_combined.copy()
+        cv2.imshow("Stereo Lab", self.img_display)
+        
+        print("\n=======================================================")
+        print("PART 2: Feature Matching & Analysis")
+        print("Click anywhere on the LEFT image to find its match in the RIGHT.")
+        print("The search is constrained along the epipolar line.")
+        print("")
+        print("Commands:")
+        print("  - Click LEFT image: Find automatic match + region analysis")
+        print("  - Press 'm' then click: Compare automatic vs manual matching")
+        print("  - Press 'e': Show epipolar lines overlay again")
+        print("  - Press 'r': Generate summary report")
+        print("  - Press 's': Save current result image")
+        print("  - Press 'q': Quit")
+        print("=======================================================")
+        self.test_mode = True
+    
+    def _show_epipolar_lines(self, ctrl_p1, ctrl_p2, test_p1, test_p2):
+        """Display epipolar lines overlay"""
+        img1_ctrl, img2_ctrl = self._draw_epipolar_lines(
+            self.img1, self.img2, ctrl_p1, ctrl_p2, (0, 255, 0))
+        
+        if len(test_p1) > 0:
+            img1_test, img2_test = self._draw_epipolar_lines(
+                self.img1, self.img2, test_p1, test_p2, (255, 0, 255))
+            img1_all = cv2.addWeighted(img1_ctrl, 0.5, img1_test, 0.5, 0)
+            img2_all = cv2.addWeighted(img2_ctrl, 0.5, img2_test, 0.5, 0)
+        else:
+            img1_all = img1_ctrl
+            img2_all = img2_ctrl
+        
+        epi_combined = np.hstack((img1_all, img2_all))
+        cv2.namedWindow("Epipolar Lines (Green=Control, Magenta=Test)")
+        cv2.imshow("Epipolar Lines (Green=Control, Magenta=Test)", epi_combined)
+        print("Epipolar lines displayed. Press any key on that window to continue...")
+        cv2.waitKey(0)
+        cv2.destroyWindow("Epipolar Lines (Green=Control, Magenta=Test)")
+    
+    def _draw_epipolar_lines(self, img1, img2, pts1, pts2, line_color):
+        """Draw epipolar lines for point correspondences"""
+        img1_lines = img1.copy()
+        img2_lines = img2.copy()
+        h, w = img2.shape[:2]
+        
+        for i, (pt1, pt2) in enumerate(zip(pts1, pts2)):
+            # Draw points
+            cv2.circle(img1_lines, pt1, 4, (0, 0, 255), -1)
+            cv2.putText(img1_lines, str(i+1), (pt1[0]+8, pt1[1]-8), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            
+            cv2.circle(img2_lines, pt2, 4, (0, 255, 0), -1)
+            cv2.putText(img2_lines, str(i+1), (pt2[0]+8, pt2[1]-8), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
+            
+            # Draw epipolar lines
+            line = self.stereo.compute_epipolar_line(pt1, self.stereo.F_matrix, 1)
+            a, b, c = line
+            if abs(b) > 1e-5:
+                x0, y0 = 0, int(-c/b)
+                x1, y1 = w, int(-(c + a*w)/b)
+                cv2.line(img2_lines, (x0, y0), (x1, y1), line_color, 1)
+            
+            line = self.stereo.compute_epipolar_line(pt2, self.stereo.F_matrix, 2)
+            a, b, c = line
+            if abs(b) > 1e-5:
+                x0, y0 = 0, int(-c/b)
+                x1, y1 = w, int(-(c + a*w)/b)
+                cv2.line(img1_lines, (x0, y0), (x1, y1), line_color, 1)
+        
+        return img1_lines, img2_lines
+    
+    def run(self):
+        """Main event loop"""
+        print("=======================================================")
+        print("PART 1: Manual Calibration")
+        print("1. Click a point on the LEFT image.")
+        print("2. Click the corresponding point on the RIGHT image.")
+        print("3. Repeat at least 8 times (10-12 recommended).")
+        print("4. Press 'c' to calculate Fundamental Matrix.")
+        print("=======================================================")
+        
+        while True:
+            # Show current display
+            if self.img_display is not None:
+                cv2.imshow("Stereo Lab", self.img_display)
+            else:
+                cv2.imshow("Stereo Lab", self.img_combined)
+            
+            key = cv2.waitKey(1) & 0xFF
+            
+            if key == ord('q'):
+                break
+            
+            elif key == ord('c') and len(self.ref_points_1) >= 8:
+                self._compute_fundamental_matrix()
+            
+            elif key == ord('m') and self.test_mode:
+                self.manual_match_mode = not self.manual_match_mode
+                if self.manual_match_mode:
+                    print("\n[MODE] MANUAL COMPARISON MODE: Click on LEFT image, then click where YOU think it is on RIGHT")
+                else:
+                    print("Manual comparison mode OFF")
+                    self.manual_match_point = None
+            
+            elif key == ord('e') and self.test_mode and self.stereo.F_matrix is not None:
+                ctrl_p1 = self.ref_points_1[:8]
+                ctrl_p2 = self.ref_points_2[:8]
+                test_p1 = self.ref_points_1[8:]
+                test_p2 = self.ref_points_2[8:]
+                print("\n--- Re-displaying Epipolar Lines ---")
+                self._show_epipolar_lines(ctrl_p1, ctrl_p2, test_p1, test_p2)
+            
+            elif key == ord('s') and self.img_display is not None:
+                filename = "stereo_result.png"
+                cv2.imwrite(filename, self.img_display)
+                print(f"Result saved as {filename}")
+            
+            elif key == ord('r') and self.test_mode and self.stereo.F_matrix is not None:
+                ctrl_p1 = self.ref_points_1[:8]
+                ctrl_p2 = self.ref_points_2[:8]
+                test_p1 = self.ref_points_1[8:]
+                test_p2 = self.ref_points_2[8:]
+                report = self.stereo.generate_report(ctrl_p1, ctrl_p2, test_p1, test_p2)
+                print("\n" + report)
+                print("\nUse 'm' key to compare automatic vs manual matching performance")
+        
+        cv2.destroyAllWindows()
+
+
+def main():
+    """Main entry point"""
+    print("Loading pic410.png and pic430.png...")
+    
+    try:
+        gui = StereoGUI('./pic410.png', './pic430.png', resize_factor=0.5)
+        gui.run()
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()
+

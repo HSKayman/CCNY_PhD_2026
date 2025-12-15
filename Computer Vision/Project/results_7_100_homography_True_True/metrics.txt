@@ -1,0 +1,64 @@
+======================================================================
+EVALUATION METRICS
+======================================================================
+
+Configuration:
+  Frames: 7
+  Motion Method: homography
+  Temporal Filter: Median
+  Sharpening: ON (strength=0.8)
+  Post-processing: none
+
+----------------------------------------------------------------------
+HIGH-FREQUENCY ENERGY (Screen Pattern Indicator)
+----------------------------------------------------------------------
+
+Original (with screen):        13162.240282  (100.0%)
+Simple Low-pass Filter:        0.012522  (  0.0%)
+Motion-Compensated (Your):     0.255343  (  0.0%)
+
+Screen Reduction:              100.0%
+Edge Preservation:             0.0%
+
+----------------------------------------------------------------------
+INTERPRETATION
+----------------------------------------------------------------------
+
+High-Frequency Energy:
+  - Lower value = better screen removal
+  - Too low = over-smoothed, edges lost
+  - Ideal range: 90-95% of original (good screen removal + edge preservation)
+
+Your Result:
+  Status: ⚠️ OVER-SMOOTHED - Too much blur, edges lost
+  Recommendation: Reduce sharpening or use fewer frames
+
+----------------------------------------------------------------------
+COMPARISON TO BASELINE
+----------------------------------------------------------------------
+
+Simple Low-pass Filter:
+  - Removes 100.0% of high-frequency content
+  - Result: Screen gone BUT image is blurred
+  - Problem: Lost important edge information
+
+Your Motion-Compensated Method:
+  - Removes 100.0% screen pattern
+  - Preserves 0.0% edge content
+  - Result: Screen removed AND edges preserved
+  - Advantage: Better quality than simple filtering
+
+======================================================================
+RATING
+======================================================================
+
+Overall Quality: ⭐⭐ NEEDS IMPROVEMENT
+
+Files Generated:
+  - original_frame.png       (Input with screen)
+  - restored_image.png       (Output without screen)
+  - comparison.png           (Side-by-side comparison)
+  - alignment_comparison.png (Motion compensation visualization)
+  - metrics.txt              (This file)
+
+======================================================================
