@@ -1,4 +1,7 @@
-"""Database service layer with SQLAlchemy and transactional operations."""
+"""
+RoboPety data-access layer: robots, users, alerts, chat, and security events.
+Wraps SQLAlchemy sessions in transactional helpers for the Flask app.
+"""
 import logging
 from contextlib import contextmanager
 from sqlalchemy.exc import SQLAlchemyError

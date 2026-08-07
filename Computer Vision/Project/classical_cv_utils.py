@@ -1,5 +1,6 @@
 """
-Classical Computer Vision Utilities
+Classical Computer Vision Utilities for the screen-removal project.
+Provides Sobel gradients, filtering, and related low-level CV helpers.
 
 Author: Hasan Suca Kayman
 Course: CSc I6716 - Computer Vision

@@ -1,5 +1,6 @@
 #!/bin/bash
-# Script to setup admin user (delete all users and create admin)
+# Purpose: Destructive admin setup — delete all users, then create the lab admin.
+# Prompts for confirmation before calling setup_admin.py.
 
 set -e
 

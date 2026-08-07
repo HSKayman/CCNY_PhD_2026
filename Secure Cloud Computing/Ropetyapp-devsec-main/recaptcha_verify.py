@@ -1,4 +1,7 @@
-"""Google reCAPTCHA verification."""
+"""
+Server-side Google reCAPTCHA verification for RoboPety forms.
+Posts tokens to Google's siteverify API and returns pass/fail.
+"""
 import requests
 import logging
 

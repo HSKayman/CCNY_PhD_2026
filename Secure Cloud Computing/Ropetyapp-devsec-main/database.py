@@ -1,3 +1,7 @@
+"""
+Legacy Cloud SQL helpers for RoboPety using PyMySQL over a Unix socket.
+Opens connections and runs basic robot / user queries against the ROBOPETY database.
+"""
 import os
 import pymysql
 

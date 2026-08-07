@@ -1,5 +1,6 @@
 #!/bin/bash
-# Script to run new feature migrations (activity tracking and robot status)
+# Purpose: Apply newer RoboPety migrations (activity tracking, robot status).
+# Uses cloud-sql-proxy and runs the corresponding SQL files.
 
 set -e
 

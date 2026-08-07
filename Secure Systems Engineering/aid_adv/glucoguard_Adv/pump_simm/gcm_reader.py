@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+GlucoGuard pump simulator helper: import CGM CSV readings into SQLite.
+Also fetches the remote glucose reader script used by the AID lab setup.
+"""
 import csv
 import sqlite3
 import socket

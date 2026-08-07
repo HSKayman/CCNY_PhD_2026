@@ -1,5 +1,6 @@
 #!/bin/bash
-# Quick script to run database migration on production Cloud SQL
+# Purpose: Run the base RoboPety SQL migration against production Cloud SQL.
+# Starts cloud-sql-proxy if needed, then applies migration_*.sql.
 
 set -e
 

@@ -1,4 +1,7 @@
-"""Main Flask application with security enhancements."""
+"""
+RoboPety Flask entrypoint: routes, auth, GCS uploads, and security middleware.
+Includes Talisman, rate limiting, reCAPTCHA, 2FA, and blue-team features.
+"""
 import os
 import tempfile
 import logging

@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Script to delete all users and create admin user."""
+"""
+Destructive admin bootstrap: wipe users and create a fresh admin account.
+Intended for lab/demo setup against Cloud SQL via the app DB layer.
+"""
 import sys
 import os
 

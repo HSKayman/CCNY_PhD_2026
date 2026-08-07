@@ -1,7 +1,6 @@
 #!/bin/bash
-
-# Script to run the admin response migration for security events
-# This adds admin_response and admin_responded_at columns to the security_events table
+# Purpose: Migrate security_events to store admin responses (text + timestamp).
+# Adds admin_response and admin_responded_at columns on Cloud SQL.
 
 set -e
 

@@ -1,4 +1,7 @@
-"""Email service for sending notifications."""
+"""
+SMTP email helpers for RoboPety notifications (signup, alerts, admin mail).
+Loads SMTP settings from Secret Manager or environment variables.
+"""
 import os
 import logging
 import smtplib

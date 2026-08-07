@@ -1,7 +1,6 @@
 #!/bin/bash
-
-# Script to run password policy migration on Cloud SQL
-# This addresses Cloud SQL security warnings
+# Purpose: Apply password-policy related SQL on Cloud SQL.
+# Addresses Cloud SQL security warnings for authentication settings.
 
 set -e
 

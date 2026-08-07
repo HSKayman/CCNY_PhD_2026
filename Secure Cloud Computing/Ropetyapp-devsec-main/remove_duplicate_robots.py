@@ -1,8 +1,7 @@
-"""Script to remove duplicate robots from the database.
-
-This script finds robots with duplicate names (or name+photo_url combinations),
-keeps the one with the lowest ID, updates all user_robots references to point
-to the kept robot, and deletes the duplicates.
+"""
+Cleanup script: remove duplicate robots from the RoboPety database.
+Finds duplicate names (or name+photo_url), keeps the lowest ID, rewires
+user_robots references, then deletes the extras via SQLAlchemy.
 """
 
 import logging

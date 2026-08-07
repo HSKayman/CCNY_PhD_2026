@@ -1,4 +1,7 @@
-"""Input validation utilities."""
+"""
+Input validation helpers for emails, usernames, and related form fields.
+Raises ValidationError for invalid client input before DB writes.
+"""
 import re
 from error_handlers import ValidationError
 

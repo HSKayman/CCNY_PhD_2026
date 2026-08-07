@@ -1,4 +1,7 @@
-"""Centralized error handling and structured logging."""
+"""
+App-wide exception types, Flask error handlers, and structured logging setup.
+Maps domain errors to consistent JSON API responses.
+"""
 import logging
 import traceback
 from functools import wraps

@@ -1,4 +1,7 @@
-"""Password policy validation."""
+"""
+Enforces RoboPety password complexity rules at signup and password change.
+Requires length, case, digit, and special-character constraints.
+"""
 import re
 from error_handlers import ValidationError
 

@@ -1,5 +1,6 @@
 """
-CSc I6716 Final Project: Window Screen Removal via Visual Motion Analysis
+CSc I6716 Final Project: Window Screen Removal via Visual Motion Analysis.
+Pipeline: load video frames, motion-compensate, temporally filter, and restore.
 
 Author: Hasan Suca Kayman
 Course: CSc I6716 - Computer Vision

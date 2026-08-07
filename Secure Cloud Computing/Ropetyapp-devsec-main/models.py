@@ -1,4 +1,7 @@
-"""SQLAlchemy models for the RoboPety application."""
+"""
+SQLAlchemy ORM models for RoboPety (users, robots, alerts, security events).
+Defines roles (user / admin / blue_team) and related association tables.
+"""
 from enum import Enum
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Enum as SQLEnum, Text, TypeDecorator

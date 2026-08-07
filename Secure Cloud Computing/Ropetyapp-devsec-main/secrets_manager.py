@@ -1,4 +1,7 @@
-"""Secrets manager with Google Secret Manager support and env fallback."""
+"""
+Central secret lookup: Google Secret Manager first, then environment variables.
+Used for JWT, DB credentials, SMTP, and reCAPTCHA keys.
+"""
 import os
 import logging
 

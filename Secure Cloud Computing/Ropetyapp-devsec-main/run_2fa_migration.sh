@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to run 2FA migration
+# Purpose: Apply the 2FA schema migration to Cloud SQL for RoboPety.
 # Usage: ./run_2fa_migration.sh
 
 set -e

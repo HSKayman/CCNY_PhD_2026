@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to verify 2FA migration was successful
+# Purpose: Verify that the RoboPety 2FA migration applied successfully.
 # Usage: ./verify_2fa_migration.sh
 
 set -e

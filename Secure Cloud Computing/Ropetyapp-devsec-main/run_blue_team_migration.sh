@@ -1,7 +1,6 @@
 #!/bin/bash
-
-# Blue Team Migration Script
-# This script adds the blue_team role and creates the security_events table
+# Purpose: Add blue_team role support and create the security_events table.
+# Applies the blue-team / SOC schema migration against Cloud SQL.
 
 set -e
 

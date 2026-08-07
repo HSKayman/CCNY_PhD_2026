@@ -1,9 +1,7 @@
 #!/bin/bash
 #
-# Robopety Complete Deployment Script (WSL / Ubuntu)
-# Enhanced version with all security features, database migration, and reCAPTCHA
-# This script installs dependencies and automates Google Cloud deployment
-# Designed for WSL (Ubuntu/Debian)
+# Purpose: End-to-end RoboPety deploy on WSL/Ubuntu (Cloud SQL, GCS, App Engine).
+# Installs deps, runs migrations, wires Secret Manager / reCAPTCHA, then deploys.
 #
 # Features:
 # - Complete infrastructure setup (Cloud SQL, Storage, App Engine)

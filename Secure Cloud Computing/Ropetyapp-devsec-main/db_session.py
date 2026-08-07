@@ -1,4 +1,7 @@
-"""SQLAlchemy database session management."""
+"""
+SQLAlchemy engine and scoped-session setup for Cloud SQL (Unix socket).
+Credentials come from secrets_manager with environment fallbacks.
+"""
 import os
 import logging
 from sqlalchemy import create_engine

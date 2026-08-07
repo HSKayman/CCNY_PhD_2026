@@ -1,4 +1,7 @@
-"""Two-Factor Authentication utilities using TOTP (Time-based One-Time Password)."""
+"""
+TOTP two-factor auth helpers (secret generation, QR codes, verification).
+Supports backup codes for RoboPety account recovery.
+"""
 import pyotp
 import qrcode
 import io

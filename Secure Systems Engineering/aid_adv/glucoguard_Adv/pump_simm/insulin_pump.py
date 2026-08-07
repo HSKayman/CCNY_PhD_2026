@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""
+GlucoGuard pump simulator helper: import insulin dosage CSV rows into SQLite.
+Loads action type, units, and requester into the insulin_logs table.
+"""
 import csv
 import sqlite3
 from pathlib import Path

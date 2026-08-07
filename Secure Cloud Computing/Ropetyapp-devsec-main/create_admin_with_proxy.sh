@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script to create admin user - automatically starts Cloud SQL Proxy
+# Purpose: Start Cloud SQL Proxy (if needed) and create a RoboPety admin user.
 # Usage: ./create_admin_with_proxy.sh
 
 set -e

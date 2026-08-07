@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Simple script to remove duplicate robots using pymysql directly."""
+"""
+One-off cleanup: remove duplicate robot rows via direct PyMySQL.
+Keeps the lowest-ID robot and rewires user_robots references.
+"""
 import pymysql
 import sys
 

@@ -1,4 +1,7 @@
-"""Authentication and authorization utilities."""
+"""
+JWT cookie auth, bcrypt password hashing, and Flask route guards.
+Provides require_auth / role checks used across the RoboPety API.
+"""
 import jwt
 import bcrypt
 from datetime import datetime, timedelta

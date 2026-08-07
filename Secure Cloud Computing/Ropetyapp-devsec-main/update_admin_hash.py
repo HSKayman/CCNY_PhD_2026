@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Update admin password hash - run after deployment when packages are available."""
+"""
+Post-deploy utility: recompute and store the admin user's bcrypt password hash.
+Run once after packages are available in the App Engine environment.
+"""
 import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

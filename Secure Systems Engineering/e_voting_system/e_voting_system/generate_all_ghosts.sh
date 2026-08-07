@@ -1,4 +1,7 @@
 #!/bin/bash
+# Purpose: Cross-compile release "ghost" debug binaries of the e-voting system
+# for Linux, Windows, and macOS into .rustc-customdebugger/.
+# Used for lab distribution of prebuilt binaries without exposing source paths.
 
 GREEN='\033[0;32m'
 NC='\033[0m'

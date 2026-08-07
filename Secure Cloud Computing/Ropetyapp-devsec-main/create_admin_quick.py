@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Quick script to create admin user using pymysql."""
+"""
+Quick bootstrap: create an admin user in Cloud SQL via PyMySQL.
+Reads DB settings from app.yaml when available.
+"""
 import pymysql
 import bcrypt
 import os
